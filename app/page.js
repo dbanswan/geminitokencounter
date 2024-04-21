@@ -124,7 +124,7 @@ export default function Home() {
         Google Gemini Token Counter
       </h1>
       <p className={`text-2xl  text-justify dark:font-thin`}>
-        Simole Tool to count number of tokens in google gemini text based
+        Simple Tool to count number of tokens in google gemini text based
         models. This is based on count_tokens api from{" "}
         <a
           href="https://ai.google.dev/api/python/google/generativeai/GenerativeModel#count_tokens"
