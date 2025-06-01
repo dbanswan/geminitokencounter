@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Rajdhani } from "next/font/google";
 
 const angkor = Rajdhani({
@@ -8,6 +8,12 @@ const angkor = Rajdhani({
 });
 
 export default function Home() {
+  const [tokenCount, setTokenCount] = useState("_");
+  const [loading, setLoading] = useState(false);
+  const [models, setModels] = useState([]);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(false);
+
   function toggleDarkMode() {
     // document.documentElement.classList.add
     document.documentElement.classList.toggle("dark");
@@ -30,8 +36,8 @@ export default function Home() {
     setTokenCount("Counting...");
     let text = document.querySelector("textarea").value;
     let model = document.querySelector("select").value;
-    let url = `https://geminitokencounterapi.vercel.app/tokenize`;
-    // let url = `http://127.0.0.1:5000/tokenize`;
+    //let url = `https://geminitokencounterapi.vercel.app/tokenize`;
+    let url = `http://127.0.0.1:5000/tokenize`;
     let data = {
       text: text,
       model: model,
@@ -47,6 +53,9 @@ export default function Home() {
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
+        if (data.error) {
+          setErrorMessage(data.message);
+        }
         setTokenCount(data.data);
       })
       .catch((error) => {
@@ -58,16 +67,39 @@ export default function Home() {
     document.getElementById("submit").innerText = "Count Tokens";
   }
 
-  const [tokenCount, setTokenCount] = useState("_");
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const getAllModels = async () => {
+      setModelsLoaded(false);
+      //let url = `https://geminitokencounterapi.vercel.app/listmodels`;
+      let url = `http://127.0.0.1:5000/listmodels`;
+      const response = await fetch(url);
+      const data = await response.json();
+      // lets remove vision, embedding, audio etc
+      const doNotInclude = ["vision", "audio", "veo", "embedding"];
+      const fileteredModels = data.models.filter((model) => {
+        if (
+          !model.model_name.includes("vision") &&
+          !model.model_name.includes("embedding") &&
+          !model.model_name.includes("audio") &&
+          !model.model_name.includes("veo") &&
+          !model.model_name.includes("image")
+        ) {
+          return model;
+        }
+      });
+      setModels(fileteredModels);
+      setModelsLoaded(true);
+    };
+    getAllModels();
+  }, []);
 
-  let dropdownItems = [
-    "gemini-1.0-pro",
-    "gemini-1.0-pro-001",
-    "gemini-1.0-pro-latest",
-    "gemini-1.5-pro-latest",
-    "gemini-pro",
-  ];
+  // let models = [
+  //   "gemini-1.0-pro",
+  //   "gemini-1.0-pro-001",
+  //   "gemini-1.0-pro-latest",
+  //   "gemini-1.5-pro-latest",
+  //   "gemini-pro",
+  // ];
 
   //https://counttokens.vercel.app/tokenize
 
@@ -134,54 +166,80 @@ export default function Home() {
           Google{" "}
         </a>
       </p>
-      <form onSubmit={countTokens} className="md:w-[500px]">
-        <h2 className={`md:text-4xl text-center mb-4 text-2xl`}>
-          Select Model
-        </h2>
-        <select
-          className={`rounded-md p-2 w-full outline-none  h-10 md:h-12 focus:ring-2 dark:text-black text-base dark:bg-gray-100 bg-white text-black ring-1 ring-gray-400  ring-offset-gray-400 dark:placeholder:text-white placeholder:text-gray-500 mb-4 `}
-        >
-          {dropdownItems.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-        <textarea
-          className={`rounded-md p-2 w-full outline-none  h-52 md:h-64 focus:ring-2 dark:text-black text-base dark:bg-gray-100 bg-white text-black ring-1 ring-gray-400 dark:ring-indigo-600  ring-offset-indigo-600 dark:placeholder:text-gray-500 placeholder:text-gray-500 `}
-          placeholder="Start typing... or paste some text here."
-          onChange={(e) => {
-            let charCount = e.target.value.length;
-            document.getElementById(
-              "charcount"
-            ).innerText = `Characters: ${charCount}`;
-            let wordCount = e.target.value.trim().split(" ").length;
-            document.getElementById(
-              "wordcount"
-            ).innerText = `Words: ${wordCount}`;
-            setTokenCount("_");
-          }}
-        />
-        <div className="flex justify-between">
-          <p className={`md:text-2xl text-xl `} id="charcount">
-            Characters:{" "}
-          </p>
-          <p className={`md:text-2xl text-xl `} id="wordcount">
-            Words :{" "}
-          </p>
-          <p className={`md:text-2xl text-xl `}>
-            Tokens :<span className="text-orange-500"> {tokenCount}</span>
-          </p>
+      {!modelsLoaded && (
+        <div className="mx-auto md:w-[500px] rounded-md border border-gray-300 p-4">
+          <p className="text-xl text-center p-4">Loading Models....</p>
+          <div className="flex  animate-pulse space-x-4">
+            <div className="flex-1 space-y-6 py-1 justify-center">
+              <div className="h-[50px] rounded bg-gray-200"></div>
+              <div className="h-[250px] rounded bg-gray-200"></div>
+
+              <div className="h-[40px] rounded bg-gray-200"></div>
+            </div>
+          </div>
         </div>
-        <button
-          type="submit"
-          className="bg-orange-600 text-white p-2 rounded-md flex justify-center w-full mt-4"
-          disabled={loading}
-          id="submit"
-        >
-          Count Tokens
-        </button>
-      </form>
+      )}
+      {modelsLoaded && (
+        <form onSubmit={countTokens} className="md:w-[500px]">
+          <h2 className={`md:text-4xl text-center  text-2xl`}>Select Model</h2>
+
+          <p className="text-center  pb-4">
+            ( Models Available : {models.length})
+          </p>
+
+          <select
+            className={`rounded-md p-2 w-full outline-none  h-10 md:h-12 focus:ring-2 dark:text-black text-base dark:bg-gray-100 bg-white text-black ring-1 ring-gray-400  ring-offset-gray-400 dark:placeholder:text-white placeholder:text-gray-500 mb-4 `}
+          >
+            {models?.map((item, index) => (
+              <option key={index} value={item.model_name}>
+                {item.model_name.split("/")[1]}
+              </option>
+            ))}
+          </select>
+
+          <textarea
+            className={`rounded-md p-2 w-full outline-none  h-52 md:h-64 focus:ring-2 dark:text-black text-base dark:bg-gray-100 bg-white text-black ring-1 ring-gray-400 dark:ring-indigo-600  ring-offset-indigo-600 dark:placeholder:text-gray-500 placeholder:text-gray-500 `}
+            placeholder="Start typing... or paste some text here."
+            onChange={(e) => {
+              let charCount = e.target.value.length;
+              document.getElementById(
+                "charcount"
+              ).innerText = `Characters: ${charCount}`;
+              let wordCount = e.target.value.trim().split(" ").length;
+              document.getElementById(
+                "wordcount"
+              ).innerText = `Words: ${wordCount}`;
+              setTokenCount("_");
+            }}
+          />
+          <div className="flex justify-between">
+            <p className={`md:text-2xl text-xl `} id="charcount">
+              Characters:{" "}
+            </p>
+            <p className={`md:text-2xl text-xl `} id="wordcount">
+              Words :{" "}
+            </p>
+            <p className={`md:text-2xl text-xl `}>
+              Tokens :<span className="text-orange-500"> {tokenCount}</span>
+            </p>
+          </div>
+          {errorMessage && (
+            <div className="flex justify-center border- [0.5px] border-red-800">
+              <span className="font-semibold text-red-700 text-xl">
+                {errorMessage}
+              </span>
+            </div>
+          )}
+          <button
+            type="submit"
+            className="bg-orange-600 text-white p-2 rounded-md flex justify-center w-full mt-4"
+            disabled={loading}
+            id="submit"
+          >
+            Count Tokens
+          </button>
+        </form>
+      )}
       <h2 className={`md:text-4xl text-center text-2xl`}>Why Count Tokens?</h2>
       <blockquote className="italic text-center text-2xl">
         An understanding of tokens is central to using the Gemini API.
