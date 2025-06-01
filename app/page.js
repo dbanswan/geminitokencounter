@@ -72,23 +72,29 @@ export default function Home() {
       setModelsLoaded(false);
       let url = `https://geminitokencounterapi.vercel.app/listmodels`;
       //let url = `http://127.0.0.1:5000/listmodels`;
-      const response = await fetch(url);
-      const data = await response.json();
-      // lets remove vision, embedding, audio etc
-      const doNotInclude = ["vision", "audio", "veo", "embedding"];
-      const fileteredModels = data.models.filter((model) => {
-        if (
-          !model.model_name.includes("vision") &&
-          !model.model_name.includes("embedding") &&
-          !model.model_name.includes("audio") &&
-          !model.model_name.includes("veo") &&
-          !model.model_name.includes("image")
-        ) {
-          return model;
-        }
-      });
-      setModels(fileteredModels);
-      setModelsLoaded(true);
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        // lets remove vision, embedding, audio etc
+        const doNotInclude = ["vision", "audio", "veo", "embedding"];
+        const fileteredModels = data.models.filter((model) => {
+          if (
+            !model.model_name.includes("vision") &&
+            !model.model_name.includes("embedding") &&
+            !model.model_name.includes("audio") &&
+            !model.model_name.includes("veo") &&
+            !model.model_name.includes("image")
+          ) {
+            return model;
+          }
+        });
+        setModels(fileteredModels);
+        setModelsLoaded(true);
+      } catch (error) {
+        setModels([]);
+        setModelsLoaded(true);
+        setErrorMessage("Error Loading Models, Please try again later");
+      }
     };
     getAllModels();
   }, []);
