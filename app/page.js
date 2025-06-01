@@ -70,8 +70,8 @@ export default function Home() {
   useEffect(() => {
     const getAllModels = async () => {
       setModelsLoaded(false);
-      //let url = `https://geminitokencounterapi.vercel.app/listmodels`;
-      let url = `http://127.0.0.1:5000/listmodels`;
+      let url = `https://geminitokencounterapi.vercel.app/listmodels`;
+      //let url = `http://127.0.0.1:5000/listmodels`;
       const response = await fetch(url);
       const data = await response.json();
       // lets remove vision, embedding, audio etc
