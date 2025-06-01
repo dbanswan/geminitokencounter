@@ -29,6 +29,7 @@ export default function Home() {
     }
 
     if (loading) return;
+    setErrorMessage(false);
 
     document.getElementById("submit").disabled = true;
     document.getElementById("submit").innerText = "Counting Tokens...";
@@ -36,8 +37,8 @@ export default function Home() {
     setTokenCount("Counting...");
     let text = document.querySelector("textarea").value;
     let model = document.querySelector("select").value;
-    //let url = `https://geminitokencounterapi.vercel.app/tokenize`;
-    let url = `http://127.0.0.1:5000/tokenize`;
+    let url = `https://geminitokencounterapi.vercel.app/tokenize`;
+    //let url = `http://127.0.0.1:5000/tokenize`;
     let data = {
       text: text,
       model: model,
